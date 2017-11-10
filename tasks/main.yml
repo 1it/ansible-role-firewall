@@ -3,10 +3,10 @@
     iptables_service: 'iptables-persistent'
   when: ansible_distribution_release == 'wheezy' or ansible_distribution_release == 'precise'
 
-- include_tasks: iptables.yml
-  tags:
-    - firewall
-
 - include_tasks: fail2ban.yml
   tags:
     - fail2ban
+
+- include_tasks: iptables.yml
+  tags:
+    - firewall
