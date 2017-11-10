@@ -23,3 +23,8 @@
     src: fail2ban/iptables-log.conf
     dest: /etc/fail2ban/filter.d/iptables-log.conf
   notify: restart fail2ban
+
+- name: Fail2ban | Check /var/log/iptables.log exists
+  file:
+    name: /var/log/iptables.log
+    state: touch
