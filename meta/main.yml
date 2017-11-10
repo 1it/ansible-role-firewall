@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  author: Ivan Tuzhilkin
+  description: Role to setup and manage firewall on Debian based distros.
+  license: MIT
+  min_ansible_version: '2.3.0'
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - precise
+        - trusty
+        - xenial
+    - name: Debian
+      versions:
+        - wheezy
+        - jessie
+        - stretch
+
+  galaxy_tags:
+    - system
+    - firewall
+    - iptables
+    - fail2ban
+
+dependencies: []

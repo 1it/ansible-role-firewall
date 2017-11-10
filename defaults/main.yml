@@ -1,0 +1,19 @@
+---
+ssh_port: 22
+ssh_strict: "False"
+
+allowed_ports:
+  - 80
+  - 443
+
+# For Iptables rules.v4
+allowed_ips: []
+
+group_allowed_ips: []
+
+local_allowed_ips:
+  - "127.0.0.1"
+  - "192.168.1.0/24"
+
+iptables_service: 'netfilter-persistent'
+

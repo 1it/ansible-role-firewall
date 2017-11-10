@@ -1,0 +1,83 @@
+# {{ ansible_managed }} #
+
+*filter
+
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+
+# Allows all loopback (lo0) traffic and drop all traffic to 127/8 that doesn't use lo0
+-A INPUT -i lo -j ACCEPT
+-A INPUT ! -i lo -d 127.0.0.0/8 -j REJECT
+
+# Drop any tcp packet that does not start a connection with a syn flag.
+-A INPUT -p tcp ! --syn -m state --state NEW -j DROP
+
+# Accepts all established inbound connections
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+{% if allowed_ips is defined %}
+# Allow access to INPUT chain (Office IPs, Developers, etc)
+{% for ip_addr in allowed_ips %}
+-A INPUT -s {{ ip_addr }} -j ACCEPT
+{% endfor %}
+{% endif %}
+
+{% if group_allowed_ips is defined %}
+# Allow access to INPUT chain (Group subnets - Access to SFTP for Clients, crosshosts access )
+{% for ip_addr in group_allowed_ips %}
+-A INPUT -s {{ ip_addr }} -j ACCEPT
+{% endfor %}
+{% endif %}
+
+{% if local_allowed_ips is defined %}
+# Allow access to INPUT chain (Local subnets )
+{% for ip_addr in local_allowed_ips %}
+-A INPUT -s {{ ip_addr }} -j ACCEPT
+{% endfor %}
+{% endif %}
+
+{% if local_rules is defined %}
+{% for rule in local_rules %}
+{{ rule }}
+{% endfor %}
+{% endif %}
+
+# Drop any invalid packet that could not be identified.
+-A INPUT -m state --state INVALID -j DROP
+
+# Allow ping from inside to outside
+-A OUTPUT -o {{ ansible_default_ipv4["alias"] }} -p icmp --icmp-type echo-request -j ACCEPT
+-A INPUT -i {{ ansible_default_ipv4["alias"] }} -p icmp --icmp-type echo-reply -m limit --limit 2/s -j ACCEPT
+
+# Allow ping from outside to inside
+-A INPUT -i {{ ansible_default_ipv4["alias"] }} -p icmp --icmp-type echo-request -m limit --limit 2/s -j ACCEPT
+-A OUTPUT -o {{ ansible_default_ipv4["alias"] }} -p icmp --icmp-type echo-reply -j ACCEPT
+
+{% if ssh_strict is defined and ssh_strict == "False" %}
+# Allows ssh connections from anywhere
+-A INPUT -m tcp -p tcp --dport {{ ssh_port }} -j ACCEPT
+{% endif %}
+
+{% if allowed_ports is defined and allowed_ports != '' %}
+# Allows certain tcp connections from anywhere
+{% for port in allowed_ports %}
+-A INPUT -p tcp -m tcp --dport {{ port }} -j ACCEPT
+{% endfor %}
+{% endif %}
+
+{% if smtp is defined %}
+# Allows SMTP connections from anywhere
+-A INPUT -m tcp -p tcp --dport 25 -j ACCEPT
+-A INPUT -m tcp -p tcp --dport 587 -j ACCEPT
+{% endif %}
+
+# Allows all outbound traffic
+# You can modify this to only allow certain traffic
+-A OUTPUT -j ACCEPT
+
+# Reject all other inbound - default deny unless explicitly allowed policy
+-A INPUT -j REJECT
+-A FORWARD -j REJECT
+
+COMMIT
